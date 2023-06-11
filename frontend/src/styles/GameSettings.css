@@ -1,0 +1,88 @@
+.gamesettings{
+	position: absolute;
+	width: 400px;
+	height: 200px;
+	top: 30%;
+	left: 45%;
+	
+	background: #92b8c4;
+	/* box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.25); */
+	border-radius: 10px;
+}
+
+.easy{
+	position: absolute;
+	width: 110px;
+	top: 10%;
+	left: 5%;
+
+	text-align: center;
+	font-family: 'Expletus Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-size: 10px;
+	line-height: 27px;
+
+	color: white;
+
+	background: #6bae75;
+	border-radius: 15px;
+}
+
+.medium{
+	position: absolute;
+	width: 110px;
+
+	top: 10%;
+	left: 36%;
+
+	text-align: center;
+	font-family: 'Expletus Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-size: 10px;
+	line-height: 27px;
+
+	color: rgb(255, 255, 255);
+
+	background: #4fb8ca;
+	border-radius: 15px;
+
+}
+
+.hard{
+	position: absolute;
+	width: 110px;
+	top: 10%;
+	left: 67%;
+
+	text-align: center;
+	font-family: 'Expletus Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-size: 10px;
+	line-height: 27px;
+
+	color: white;
+
+	background: #9e5188;
+	border-radius: 15px;
+}
+
+.reverse-mode{
+	position: absolute;
+	top: 50%;
+	left: 28%;
+
+	text-align: center;
+	font-family: 'Expletus Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-size: 10px;
+	line-height: 27px;
+
+	color: white;
+
+	background: linear-gradient(rgb(219, 241, 54), rgb(244, 116, 138));;
+	border-radius: 15px;
+}

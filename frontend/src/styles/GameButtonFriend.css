@@ -1,0 +1,23 @@
+.gamebuttonFriend{
+	position: absolute;
+	width: 260px;
+	height: 75px;
+	top: 55%;
+	left: 20px;
+	
+	background: #387C92;
+	box-shadow: inset 0px 10px 10px rgba(0, 0, 0, 0.25);
+	border-radius: 15px;
+}
+
+.playwithfriendz{
+	text-align: center;
+
+	font-family: 'Expletus Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-size: 20px;
+	line-height: 27px;
+
+	color: white;
+}

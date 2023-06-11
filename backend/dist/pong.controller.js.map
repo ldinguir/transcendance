@@ -1,1 +1,0 @@
-{"version":3,"file":"pong.controller.js","sourceRoot":"","sources":["../src/pong.controller.ts"],"names":[],"mappings":";;;;;;;;;;;;AAEA,2CAAyD;AAGzD,IAAa,cAAc,GAA3B,MAAa,cAAc;IAQzB,QAAQ;QACN,OAAO,EAAE,CAAC;IACZ,CAAC;CACF,CAAA;AAHC;IAFC,IAAA,YAAG,GAAE;IACL,IAAA,eAAM,EAAC,MAAM,CAAC;;;;8CAGd;AAVU,cAAc;IAD1B,IAAA,mBAAU,EAAC,MAAM,CAAC;GACN,cAAc,CAW1B;AAXY,wCAAc"}

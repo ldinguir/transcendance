@@ -1,0 +1,23 @@
+.online{
+	text-align: center;
+}
+
+.online-div{
+	position: absolute;
+
+	height: 100%;
+	width : 27%;
+	background: #bdbdbb;
+}
+
+ul {
+	list-style-type: none;
+	margin: 10px;
+	padding: 0px;
+}
+
+ul li::before{
+	content: "●";
+	margin-right: 10px;
+	color: rgb(79, 221, 173);
+}
