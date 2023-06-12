@@ -6,15 +6,14 @@ import '../styles/Canvas.css';
 function CanvasQueue(props)
 {
 	const ref = useRef(null);
+	const [socket, setSocket] = useState(null);
 	const [clientId, setClientId] = useState('');
 	const [GameStarted, setGameStarted] = useState(false);
-	// const [newGame, setNewGame] = useState([300, 150]);
-	//  /*
 	const [newGame, setNewGame] = useState(
 		{
 			canvas : 
 			{
-				height : 30,
+				height : 300,
 				width : 600,
 			},
 			player : 
@@ -41,27 +40,32 @@ function CanvasQueue(props)
 				},
 			}
 		});
-		// */
 
 	useEffect(() => {	
-		const socket = io('http://localhost:3000');
+		const socketinstance = io('http://localhost:3000');
+		setSocket(socketinstance);
+	  	  
+		return () => {
+		  socketinstance.disconnect();
+		};
+	  }, []);
 
-		socket.on('clientInfo', (id) => {
-			setClientId(id); // Stocke l'ID du client dans clientID
-		});
-
-		socket.emit('joinGame', clientId, props.mode);
-
-		socket.on('startGame', () => {setGameStarted(true)});
-
-		socket.on('ballmove', (updatedGame) => {
-			// console.log(updatedGame);
-			setNewGame(updatedGame);
+	useEffect(() => {	
+		if(socket)
+		{
+			socket.on('clientInfo', (id) => {
+				setClientId(id); // Stocke l'ID du client dans clientID
 			});
-			// console.log(`ballX = ${game.ball.x}`);
-			// console.log(`ballY = ${game.ball.y}`);
-			// console.log(`NewballX = ${newBallPos[0]}`);
-			// console.log(`NewballY = ${newBallPos[1]}`);
+	
+			socket.emit('joinGame', clientId, props.mode);
+	
+			socket.on('startGame', () => {setGameStarted(true)});
+
+			socket.on('ballmove', (updatedGame) => 
+			{
+				setNewGame(updatedGame);
+			});
+		}
 		
 		var canvas = ref.current;
 		var ctx = canvas.getContext("2d");
@@ -118,9 +122,15 @@ function CanvasQueue(props)
 		function decelerateInterpolator(x) {
 			return 1 - ((1 - x) * (1 - x));
 		}
-		return (() => {socket.disconnect();})
+		return (() => 
+		{
+			if(socket)
+			{
+				socket.disconnect();
+			}
+		})
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [socket]);
 	
 	function chooseCanvas(GameStarted)
 	{
@@ -132,19 +142,19 @@ function CanvasQueue(props)
 		{
 			if (props.mode === 'easy')
 			{
-				return(<Canvas updatedGame={newGame} playerWidth={10} playerHeight={100} speed={2} reverse={0}/>)
+				return(<Canvas updatedGame={newGame} socket={socket} playerWidth={10} playerHeight={100} speed={2} reverse={0}/>)
 			}
 			else if (props.mode === 'med')
 			{
-				return(<Canvas updatedGame={newGame} playerWidth={10} playerHeight={100} speed={4} reverse={0}/>)
+				return(<Canvas updatedGame={newGame} socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={0}/>)
 			}
 			else if (props.mode === 'hard')
 			{
-				return(<Canvas updatedGame={newGame} playerWidth={10} playerHeight={100} speed={6} reverse={0}/>)
+				return(<Canvas updatedGame={newGame} socket={socket} playerWidth={10} playerHeight={100} speed={6} reverse={0}/>)
 			}
 			else if (props.mode === 'rev')
 			{
-				return(<Canvas updatedGame={newGame} playerWidth={10} playerHeight={100} speed={4} reverse={-1}/>)
+				return(<Canvas updatedGame={newGame} socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={-1}/>)
 			}
 		}
 	}
@@ -159,3 +169,4 @@ function CanvasQueue(props)
 	);
 }
 export default CanvasQueue;
+

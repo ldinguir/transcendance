@@ -8,9 +8,11 @@ export declare class GameSockets {
     queueRev: Socket[];
     rooms: any[];
     game: Game;
+    gameOpposant: Game;
     constructor();
     handleJoinGame(client: Socket, mode: string): void;
     startGame(room: any[]): void;
     initGame(): void;
     ballMove(room: any[]): void;
+    handlePlayerMove(client: Socket, playerPosY: number): void;
 }

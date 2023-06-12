@@ -21,6 +21,7 @@ let GameSockets = class GameSockets {
         this.queueRev = [];
         this.rooms = [];
         this.game = new game_1.Game();
+        this.gameOpposant = new game_1.Game();
     }
     handleJoinGame(client, mode) {
         console.log(`play request from : ${client.id}`);
@@ -107,14 +108,42 @@ let GameSockets = class GameSockets {
                     y: 2,
                 }
             };
+        this.gameOpposant.canvas = {
+            height: 300,
+            width: 600,
+        };
+        this.gameOpposant.player =
+            {
+                x: 0,
+                y: 100,
+                height: 100,
+                width: 10,
+            };
+        this.gameOpposant.player2 =
+            {
+                x: 590,
+                y: 100,
+            };
+        this.gameOpposant.ball =
+            {
+                x: 300,
+                y: 150,
+                r: 5,
+                speed: {
+                    x: -2,
+                    y: -2,
+                }
+            };
     }
     ballMove(room) {
         if (this.game.ball.y < 0 || this.game.ball.y > this.game.canvas.height) {
             this.game.ball.speed.y *= -1;
+            this.gameOpposant.ball.speed.y *= -1;
         }
         if (this.game.ball.x < this.game.player.width) {
             if ((this.game.ball.y > this.game.player.y) && (this.game.ball.y < this.game.player.y + this.game.player.height)) {
                 this.game.ball.speed.x *= -1;
+                this.gameOpposant.ball.speed.x *= -1;
             }
             else {
                 this.initGame();
@@ -123,6 +152,7 @@ let GameSockets = class GameSockets {
         if (this.game.ball.x > (this.game.canvas.width - this.game.player.width)) {
             if ((this.game.ball.y > this.game.player2.y) && (this.game.ball.y < this.game.player2.y + this.game.player.height)) {
                 this.game.ball.speed.x *= -1;
+                this.gameOpposant.ball.speed.x *= -1;
             }
             else {
                 this.initGame();
@@ -130,9 +160,31 @@ let GameSockets = class GameSockets {
         }
         this.game.ball.x += this.game.ball.speed.x;
         this.game.ball.y += this.game.ball.speed.y;
+        this.gameOpposant.ball.x -= this.game.ball.speed.x;
+        this.gameOpposant.ball.y -= this.game.ball.speed.y;
         console.log(`ballX = ${this.game.ball.x}`);
         console.log(`ballY = ${this.game.ball.y}`);
-        room.forEach((player) => { player.emit('ballmove', this.game); });
+        room[0].emit('ballmove', this.game);
+        room[1].emit('ballmove', this.gameOpposant);
+    }
+    handlePlayerMove(client, playerPosY) {
+        const stop = 0;
+        for (let i = 0; i < this.rooms.length; i++) {
+            for (let j = 0; j < 2; j++) {
+                if (client.id == (this.rooms[i][j]).id) {
+                    if (j == 0) {
+                        this.gameOpposant.player2.y = playerPosY;
+                    }
+                    else {
+                        this.game.player2.y = playerPosY;
+                    }
+                    break;
+                }
+            }
+            if (stop) {
+                break;
+            }
+        }
     }
 };
 __decorate([
@@ -145,6 +197,12 @@ __decorate([
     __metadata("design:paramtypes", [socket_io_1.Socket, String]),
     __metadata("design:returntype", void 0)
 ], GameSockets.prototype, "handleJoinGame", null);
+__decorate([
+    (0, websockets_1.SubscribeMessage)('playerMove'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [socket_io_1.Socket, Number]),
+    __metadata("design:returntype", void 0)
+], GameSockets.prototype, "handlePlayerMove", null);
 GameSockets = __decorate([
     (0, websockets_1.WebSocketGateway)({
         cors: {

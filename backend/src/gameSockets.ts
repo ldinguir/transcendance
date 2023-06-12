@@ -1,7 +1,6 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage } from '@nestjs/websockets';
 import { Server, Socket} from 'socket.io';
 import { Game } from './game';
-// import { GameService } from './game.service';
 
 @WebSocketGateway({
 	cors: {
@@ -21,18 +20,13 @@ export class GameSockets
 	rooms : any[] = [];
 
 	game : Game;
+	gameOpposant : Game;
 
 	constructor()
 	{
-		this.game = new Game(); // Ajout de l'initialisation de this.game
+		this.game = new Game();
+		this.gameOpposant = new Game();
 	}
-
-	// private gameService: GameService;
-
-	// constructor(gameService: GameService)
-	// {
-		// this.gameService = gameService;
-	// }
 
 	// Implémentation des méthodes de gestion des événements Socket.IO pour le jeu
 
@@ -116,6 +110,7 @@ export class GameSockets
 
 	initGame()
 	{
+	// Initialisation du joueur 1
 		this.game.canvas = {
 			height : 300,
 			width : 600,
@@ -146,6 +141,37 @@ export class GameSockets
 				y : 2,
 			}
 		}
+// Initialisation du joueur 2
+		this.gameOpposant.canvas = {
+			height : 300,
+			width : 600,
+		}
+
+		this.gameOpposant.player = 
+		{
+			x : 0,
+			y : 100,
+			height : 100,
+			width :10, 
+		}
+
+		this.gameOpposant.player2 = 
+		{
+			x : 590,
+			y : 100,
+		}
+
+		this.gameOpposant.ball = 
+		{
+			x : 300,
+			y : 150,
+			r : 5,
+			speed :
+			{
+				x : -2,
+				y : -2,
+			}
+		}
 	}
 
 	ballMove(room : any[])
@@ -154,6 +180,7 @@ export class GameSockets
 		if (this.game.ball.y < 0 || this.game.ball.y > this.game.canvas.height) // omis la taille de la balle
 		{
 			this.game.ball.speed.y *= -1;
+			this.gameOpposant.ball.speed.y *= -1;
 		}
 		// Gestion des collisions avec le Paddle du joueur1
 		if (this.game.ball.x < this.game.player.width)
@@ -161,18 +188,20 @@ export class GameSockets
 			if ((this.game.ball.y > this.game.player.y) && (this.game.ball.y < this.game.player.y + this.game.player.height))
 			{
 				this.game.ball.speed.x *= -1;
+				this.gameOpposant.ball.speed.x *= -1;
 			}
 			else
 			{
 				this.initGame();
 			}
 		}
-		// Gestion des collisions avec le paddle du jpueur 2 
+		// Gestion des collisions avec le paddle du joueur 2 
 		if (this.game.ball.x > (this.game.canvas.width - this.game.player.width))
 		{
 			if ((this.game.ball.y > this.game.player2.y) && (this.game.ball.y < this.game.player2.y + this.game.player.height))
 			{
 				this.game.ball.speed.x *= -1;
+				this.gameOpposant.ball.speed.x *= -1;
 			}
 			else
 			{
@@ -182,12 +211,16 @@ export class GameSockets
 		// On incremente ball.x et ball.y pour faire avancer la balle dans une direction
 		this.game.ball.x += this.game.ball.speed.x;
 		this.game.ball.y += this.game.ball.speed.y;
-		console.log(`ballX = ${this.game.ball.x}`);
-		console.log(`ballY = ${this.game.ball.y}`);
-		room.forEach((player) => {player.emit('ballmove', this.game);});
+		this.gameOpposant.ball.x -= this.game.ball.speed.x;
+		this.gameOpposant.ball.y -= this.game.ball.speed.y;
+
+		// console.log(`ballX = ${this.game.ball.x}`);
+		// console.log(`ballY = ${this.game.ball.y}`);
+		room[0].emit('ballmove', this.game);
+		room[1].emit('ballmove', this.gameOpposant);
 	}
 
-/*
+// /*
 	@SubscribeMessage('playerMove')
 	handlePlayerMove(client : Socket, playerPosY : number)
 	{
@@ -200,11 +233,11 @@ export class GameSockets
 				{
 					if (j == 0)
 					{
-						this.rooms[i][0].emit('playermove2', playerPosY);
+						this.gameOpposant.player2.y = playerPosY;
 					}
 					else
 					{
-						this.rooms[i][1].emit('playermove2', playerPosY);
+						this.game.player2.y = playerPosY;
 					}
 					break;
 				}
@@ -214,59 +247,7 @@ export class GameSockets
 				break;
 			}
 		}
-
-
-
-		// let targetPlayer: Socket | null = null;
-		// let targetOpponent: Socket | null = null;
-	//   
-		// for (let i = 0; i < this.rooms.length; i++) {
-		//   for (let j = 0; j < 2; j++) {
-			// if (client.id === this.rooms[i][j].id) {
-			//   targetPlayer = this.rooms[i][j];
-			//   targetOpponent = this.rooms[i][(j + 1) % 2]; // Récupère l'opposant du joueur
-	//   
-			//   break;
-			// }
-		//   }
-	//   
-		//   if (targetPlayer && targetOpponent) {
-			// break;
-		//   }
-		// }
-	//   
-		// if (targetPlayer && targetOpponent) {
-		//   targetOpponent.emit('playermove2', playerPosY); // Envoie le mouvement du joueur 1 à l'opposant (joueur 2)
-		// }
-
-
-
-		// let targetRoom: Socket[] | undefined;
-// 
-		// for (let i = 0; i < this.rooms.length; i++) {
-		//   if (this.rooms[i].includes(client)) {
-			// targetRoom = this.rooms[i];
-			// break;
-		//   }
-		// }
-	//   
-		// if (targetRoom && targetRoom.length === 2) {
-		//   const targetPlayer = targetRoom.find((player) => player !== client);
-		//   if (targetPlayer) {
-			// targetPlayer.emit('playermove2', playerPosY); // Envoie le mouvement du joueur 1 à l'opposant (joueur 2)
-		//   }
-		// }
-
-
-
-
-		// const room = this.rooms.find((room) => room.includes(client));
-		// if (room && room.length === 2) {
-		//   const targetPlayer = room.find((player) => player !== client);
-		//   if (targetPlayer) {
-			// targetPlayer.emit('playerMove', playerPosY);
-		//   }
-		// }
 	}
-	*/
 }
+// */
+
