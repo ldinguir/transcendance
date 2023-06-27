@@ -13,6 +13,7 @@ exports.GameSockets = void 0;
 const websockets_1 = require("@nestjs/websockets");
 const socket_io_1 = require("socket.io");
 const game_1 = require("./game");
+const room_1 = require("./room");
 let GameSockets = class GameSockets {
     constructor() {
         this.queueEasy = [];
@@ -20,8 +21,6 @@ let GameSockets = class GameSockets {
         this.queueHard = [];
         this.queueRev = [];
         this.rooms = [];
-        this.game = new game_1.Game();
-        this.gameOpposant = new game_1.Game();
     }
     handleJoinGame(client, mode) {
         console.log(`play request from : ${client.id}`);
@@ -30,9 +29,11 @@ let GameSockets = class GameSockets {
             console.log('on est entré dans easy !');
             this.queueEasy.push(client);
             if (this.queueEasy.length >= 2) {
-                console.log(`player1 = ${this.queueEasy[0]}`);
-                console.log(`player2 = ${this.queueEasy[1]}`);
-                const room = [this.queueEasy[0], this.queueEasy[1]];
+                console.log(`player1 = ${this.queueEasy[0].id}`);
+                console.log(`player2 = ${this.queueEasy[1].id}`);
+                const room = new room_1.Room();
+                room.player1 = this.queueEasy[0];
+                room.player2 = this.queueEasy[1];
                 this.queueEasy.splice(0, 2);
                 console.log(`Room = ${room}`);
                 this.rooms.push(room);
@@ -42,9 +43,11 @@ let GameSockets = class GameSockets {
         else if (mode == ',med') {
             this.queueMed.push(client);
             if (this.queueMed.length >= 2) {
-                console.log(`player1 = ${this.queueMed[0]}`);
-                console.log(`player2 = ${this.queueMed[1]}`);
-                const room = [this.queueMed[0], this.queueMed[1]];
+                console.log(`player1 = ${this.queueMed[0].id}`);
+                console.log(`player2 = ${this.queueMed[1].id}`);
+                const room = new room_1.Room();
+                room.player1 = this.queueMed[0];
+                room.player2 = this.queueMed[1];
                 this.queueMed.splice(0, 2);
                 this.rooms.push(room);
                 this.startGame(room);
@@ -53,9 +56,11 @@ let GameSockets = class GameSockets {
         else if (mode == ',hard') {
             this.queueHard.push(client);
             if (this.queueHard.length >= 2) {
-                console.log(`player1 = ${this.queueHard[0]}`);
-                console.log(`player2 = ${this.queueHard[1]}`);
-                const room = [this.queueHard[0], this.queueHard[1]];
+                console.log(`player1 = ${this.queueHard[0].id}`);
+                console.log(`player2 = ${this.queueHard[1].id}`);
+                const room = new room_1.Room();
+                room.player1 = this.queueHard[0];
+                room.player2 = this.queueHard[1];
                 this.queueHard.splice(0, 2);
                 this.rooms.push(room);
                 this.startGame(room);
@@ -64,9 +69,11 @@ let GameSockets = class GameSockets {
         else if (mode == ',rev') {
             this.queueRev.push(client);
             if (this.queueRev.length >= 2) {
-                console.log(`player1 = ${this.queueRev[0]}`);
-                console.log(`player2 = ${this.queueRev[1]}`);
-                const room = [this.queueRev[0], this.queueRev[1]];
+                console.log(`player1 = ${this.queueRev[0].id}`);
+                console.log(`player2 = ${this.queueRev[1].id}`);
+                const room = new room_1.Room();
+                room.player1 = this.queueRev[0];
+                room.player2 = this.queueRev[1];
                 this.queueRev.splice(0, 2);
                 this.rooms.push(room);
                 this.startGame(room);
@@ -74,31 +81,34 @@ let GameSockets = class GameSockets {
         }
     }
     startGame(room) {
-        console.log(`Le jeu va commencer entre ${room[0].id} et ${room[1].id}`);
-        room.forEach((player) => { player.emit('startGame'); });
-        this.initGame();
-        setInterval(() => {
-            this.ballMove(room);
+        room.game = new game_1.Game();
+        room.gameOpposant = new game_1.Game();
+        console.log(`Le jeu va commencer entre ${room.player1.id} et ${room.player2.id}`);
+        room.player1.emit('startGame');
+        room.player2.emit('startGame');
+        this.initGame(room.game, room.gameOpposant);
+        const fct = setInterval(() => {
+            this.ballMove(room, fct);
         }, 50);
     }
-    initGame() {
-        this.game.canvas = {
+    initGame(game, gameOpposant) {
+        game.canvas = {
             height: 300,
             width: 600,
         };
-        this.game.player =
+        game.player =
             {
                 x: 0,
                 y: 100,
                 height: 100,
                 width: 10,
             };
-        this.game.player2 =
+        game.player2 =
             {
                 x: 590,
                 y: 100,
             };
-        this.game.ball =
+        game.ball =
             {
                 x: 300,
                 y: 150,
@@ -108,23 +118,23 @@ let GameSockets = class GameSockets {
                     y: 2,
                 }
             };
-        this.gameOpposant.canvas = {
+        gameOpposant.canvas = {
             height: 300,
             width: 600,
         };
-        this.gameOpposant.player =
+        gameOpposant.player =
             {
                 x: 0,
                 y: 100,
                 height: 100,
                 width: 10,
             };
-        this.gameOpposant.player2 =
+        gameOpposant.player2 =
             {
                 x: 590,
                 y: 100,
             };
-        this.gameOpposant.ball =
+        gameOpposant.ball =
             {
                 x: 300,
                 y: 150,
@@ -135,53 +145,60 @@ let GameSockets = class GameSockets {
                 }
             };
     }
-    ballMove(room) {
-        if (this.game.ball.y < 0 || this.game.ball.y > this.game.canvas.height) {
-            this.game.ball.speed.y *= -1;
-            this.gameOpposant.ball.speed.y *= -1;
+    ballMove(room, fct) {
+        if (room.game.ball.y < 0 || room.game.ball.y > room.game.canvas.height) {
+            room.game.ball.speed.y *= -1;
+            room.gameOpposant.ball.speed.y *= -1;
         }
-        if (this.game.ball.x < this.game.player.width) {
-            if ((this.game.ball.y > this.game.player.y) && (this.game.ball.y < this.game.player.y + this.game.player.height)) {
-                this.game.ball.speed.x *= -1;
-                this.gameOpposant.ball.speed.x *= -1;
+        if (room.game.ball.x < room.game.player.width) {
+            if ((room.game.ball.y > room.game.player.y) && (room.game.ball.y < room.game.player.y + room.game.player.height)) {
+                room.game.ball.speed.x *= -1;
+                room.gameOpposant.ball.speed.x *= -1;
             }
             else {
-                this.initGame();
+                room.player1.emit('gameOver', false);
+                room.player2.emit('gameOver', true);
+                var index = this.rooms.indexOf(room);
+                if (index !== -1) {
+                    this.rooms.splice(index, 1);
+                }
+                clearInterval(fct);
+                console.log(`Il y a mtn ${this.rooms.length} rooms en cours`);
             }
         }
-        if (this.game.ball.x > (this.game.canvas.width - this.game.player.width)) {
-            if ((this.game.ball.y > this.game.player2.y) && (this.game.ball.y < this.game.player2.y + this.game.player.height)) {
-                this.game.ball.speed.x *= -1;
-                this.gameOpposant.ball.speed.x *= -1;
+        if (room.game.ball.x > (room.game.canvas.width - room.game.player.width)) {
+            if ((room.game.ball.y > room.game.player2.y) && (room.game.ball.y < room.game.player2.y + room.game.player.height)) {
+                room.game.ball.speed.x *= -1;
+                room.gameOpposant.ball.speed.x *= -1;
             }
             else {
-                this.initGame();
+                room.player1.emit('gameOver', true);
+                room.player2.emit('gameOver', false);
+                var index = this.rooms.indexOf(room);
+                if (index !== -1) {
+                    this.rooms.splice(index, 1);
+                }
+                clearInterval(fct);
+                console.log(`Il y a mtn ${this.rooms.length} rooms en cours`);
             }
         }
-        this.game.ball.x += this.game.ball.speed.x;
-        this.game.ball.y += this.game.ball.speed.y;
-        this.gameOpposant.ball.x -= this.game.ball.speed.x;
-        this.gameOpposant.ball.y -= this.game.ball.speed.y;
-        console.log(`ballX = ${this.game.ball.x}`);
-        console.log(`ballY = ${this.game.ball.y}`);
-        room[0].emit('ballmove', this.game);
-        room[1].emit('ballmove', this.gameOpposant);
+        room.game.ball.x += room.game.ball.speed.x;
+        room.game.ball.y += room.game.ball.speed.y;
+        room.gameOpposant.ball.x -= room.game.ball.speed.x;
+        room.gameOpposant.ball.y -= room.game.ball.speed.y;
+        room.player1.emit('ballmove', room.game);
+        room.player2.emit('ballmove', room.gameOpposant);
     }
     handlePlayerMove(client, playerPosY) {
-        const stop = 0;
         for (let i = 0; i < this.rooms.length; i++) {
-            for (let j = 0; j < 2; j++) {
-                if (client.id == (this.rooms[i][j]).id) {
-                    if (j == 0) {
-                        this.gameOpposant.player2.y = playerPosY;
-                    }
-                    else {
-                        this.game.player2.y = playerPosY;
-                    }
-                    break;
-                }
+            if (client.id == this.rooms[i].player1.id) {
+                this.rooms[i].gameOpposant.player2.y = (this.rooms[i].gameOpposant.canvas.height - playerPosY) - this.rooms[i].gameOpposant.player.height;
+                this.rooms[i].game.player.y = playerPosY;
+                break;
             }
-            if (stop) {
+            else if (client.id == this.rooms[i].player2.id) {
+                this.rooms[i].game.player2.y = (this.rooms[i].game.canvas.height - playerPosY) - this.rooms[i].game.player.height;
+                this.rooms[i].gameOpposant.player.y = playerPosY;
                 break;
             }
         }
@@ -208,8 +225,7 @@ GameSockets = __decorate([
         cors: {
             origin: "*",
         },
-    }),
-    __metadata("design:paramtypes", [])
+    })
 ], GameSockets);
 exports.GameSockets = GameSockets;
 //# sourceMappingURL=gameSockets.js.map

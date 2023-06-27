@@ -9,37 +9,6 @@ function CanvasQueue(props)
 	const [socket, setSocket] = useState(null);
 	const [clientId, setClientId] = useState('');
 	const [GameStarted, setGameStarted] = useState(false);
-	const [newGame, setNewGame] = useState(
-		{
-			canvas : 
-			{
-				height : 300,
-				width : 600,
-			},
-			player : 
-			{
-				x : 0,
-				y : 100,
-				height : 100,
-				width :10, 
-			},
-			player2 : 
-			{
-				x : 590,
-				y : 100,
-			},
-			ball : 
-			{
-				x : 300,
-				y : 150,
-				r : 5,
-				speed :
-				{
-					x : 2,
-					y : 2,
-				},
-			}
-		});
 
 	useEffect(() => {	
 		const socketinstance = io('http://localhost:3000');
@@ -50,7 +19,8 @@ function CanvasQueue(props)
 		};
 	  }, []);
 
-	useEffect(() => {	
+	useEffect(() => {
+
 		if(socket)
 		{
 			socket.on('clientInfo', (id) => {
@@ -60,11 +30,6 @@ function CanvasQueue(props)
 			socket.emit('joinGame', clientId, props.mode);
 	
 			socket.on('startGame', () => {setGameStarted(true)});
-
-			socket.on('ballmove', (updatedGame) => 
-			{
-				setNewGame(updatedGame);
-			});
 		}
 		
 		var canvas = ref.current;
@@ -131,7 +96,7 @@ function CanvasQueue(props)
 		})
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [socket]);
-	
+	/*
 	function chooseCanvas(GameStarted)
 	{
 		if (!GameStarted)
@@ -158,7 +123,34 @@ function CanvasQueue(props)
 			}
 		}
 	}
+*/
 
+function chooseCanvas(GameStarted)
+{
+	if (!GameStarted)
+	{
+		return(<canvas className='canvas' ref={ref} />)
+	}
+	else
+	{
+		if (props.mode === 'easy')
+		{
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={2} reverse={0}/>)
+		}
+		else if (props.mode === 'med')
+		{
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={0}/>)
+		}
+		else if (props.mode === 'hard')
+		{
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={6} reverse={0}/>)
+		}
+		else if (props.mode === 'rev')
+		{
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={-1}/>)
+		}
+	}
+}
 	return(
 		<div>
 			{

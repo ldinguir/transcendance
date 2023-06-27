@@ -1,6 +1,7 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage } from '@nestjs/websockets';
 import { Server, Socket} from 'socket.io';
 import { Game } from './game';
+import { Room } from './room';
 
 @WebSocketGateway({
 	cors: {
@@ -17,16 +18,7 @@ export class GameSockets
 	queueHard:	Socket[] = [];
 	queueRev:	Socket[] = [];
 
-	rooms : any[] = [];
-
-	game : Game;
-	gameOpposant : Game;
-
-	constructor()
-	{
-		this.game = new Game();
-		this.gameOpposant = new Game();
-	}
+	rooms : Room[] = [];
 
 	// Implémentation des méthodes de gestion des événements Socket.IO pour le jeu
 
@@ -43,9 +35,13 @@ export class GameSockets
 			this.queueEasy.push(client);
 			if (this.queueEasy.length >= 2)
 			{
-				console.log(`player1 = ${this.queueEasy[0]}`);
-				console.log(`player2 = ${this.queueEasy[1]}`);
-				const room = [this.queueEasy[0], this.queueEasy[1]];
+				console.log(`player1 = ${this.queueEasy[0].id}`);
+				console.log(`player2 = ${this.queueEasy[1].id}`);
+				const room = new Room();
+				room.player1 = this.queueEasy[0];
+				room.player2 = this.queueEasy[1];
+
+				// const room = [this.queueEasy[0], this.queueEasy[1]];
 				this.queueEasy.splice(0,2);
 				console.log(`Room = ${room}`);
 
@@ -58,9 +54,13 @@ export class GameSockets
 			this.queueMed.push(client);
 			if (this.queueMed.length >= 2)
 			{
-				console.log(`player1 = ${this.queueMed[0]}`);
-				console.log(`player2 = ${this.queueMed[1]}`);
-				const room = [this.queueMed[0], this.queueMed[1]];
+				console.log(`player1 = ${this.queueMed[0].id}`);
+				console.log(`player2 = ${this.queueMed[1].id}`);
+				const room = new Room();
+				room.player1 = this.queueMed[0];
+				room.player2 = this.queueMed[1];
+
+				// const room = [this.queueMed[0], this.queueMed[1]];
 				this.queueMed.splice(0,2);
 
 				this.rooms.push(room);
@@ -72,9 +72,13 @@ export class GameSockets
 			this.queueHard.push(client);
 			if (this.queueHard.length >= 2)
 			{
-				console.log(`player1 = ${this.queueHard[0]}`);
-				console.log(`player2 = ${this.queueHard[1]}`);
-				const room = [this.queueHard[0], this.queueHard[1]];
+				console.log(`player1 = ${this.queueHard[0].id}`);
+				console.log(`player2 = ${this.queueHard[1].id}`);
+				const room = new Room();
+				room.player1 = this.queueHard[0];
+				room.player2 = this.queueHard[1];
+
+				// const room = [this.queueHard[0], this.queueHard[1]];
 				this.queueHard.splice(0,2);
 
 				this.rooms.push(room);
@@ -86,9 +90,13 @@ export class GameSockets
 			this.queueRev.push(client);
 			if (this.queueRev.length >= 2)
 			{
-				console.log(`player1 = ${this.queueRev[0]}`);
-				console.log(`player2 = ${this.queueRev[1]}`);
-				const room = [this.queueRev[0], this.queueRev[1]];
+				console.log(`player1 = ${this.queueRev[0].id}`);
+				console.log(`player2 = ${this.queueRev[1].id}`);
+				const room = new Room();
+				room.player1 = this.queueRev[0];
+				room.player2 = this.queueRev[1];
+
+				// const room = [this.queueRev[0], this.queueRev[1]];
 				this.queueRev.splice(0,2);
 
 				this.rooms.push(room);
@@ -97,26 +105,32 @@ export class GameSockets
 		}
 	}
 
-	startGame(room : any[])
+	startGame(room : Room)
 	{
-		console.log(`Le jeu va commencer entre ${room[0].id} et ${room[1].id}`);
-		room.forEach((player) => {player.emit('startGame');});
-		this.initGame();
-		setInterval(()=>
+		room.game = new Game();
+		room.gameOpposant = new Game();
+
+		console.log(`Le jeu va commencer entre ${room.player1.id} et ${room.player2.id}`);
+
+		room.player1.emit('startGame');
+		room.player2.emit('startGame');
+		this.initGame(room.game, room.gameOpposant);
+
+		const fct = setInterval(()=>
 		{
-			this.ballMove(room);
+			this.ballMove(room, fct);
 		}, 50);
 	}
 
-	initGame()
+	initGame(game : Game, gameOpposant : Game)
 	{
 	// Initialisation du joueur 1
-		this.game.canvas = {
+		game.canvas = {
 			height : 300,
 			width : 600,
 		}
 
-		this.game.player = 
+		game.player = 
 		{
 			x : 0,
 			y : 100,
@@ -124,13 +138,13 @@ export class GameSockets
 			width :10, 
 		}
 
-		this.game.player2 = 
+		game.player2 = 
 		{
 			x : 590,
 			y : 100,
 		}
 
-		this.game.ball = 
+		game.ball = 
 		{
 			x : 300,
 			y : 150,
@@ -142,12 +156,12 @@ export class GameSockets
 			}
 		}
 // Initialisation du joueur 2
-		this.gameOpposant.canvas = {
+		gameOpposant.canvas = {
 			height : 300,
 			width : 600,
 		}
 
-		this.gameOpposant.player = 
+		gameOpposant.player = 
 		{
 			x : 0,
 			y : 100,
@@ -155,13 +169,13 @@ export class GameSockets
 			width :10, 
 		}
 
-		this.gameOpposant.player2 = 
+		gameOpposant.player2 = 
 		{
 			x : 590,
 			y : 100,
 		}
 
-		this.gameOpposant.ball = 
+		gameOpposant.ball = 
 		{
 			x : 300,
 			y : 150,
@@ -174,76 +188,93 @@ export class GameSockets
 		}
 	}
 
-	ballMove(room : any[])
+	ballMove(room : Room, fct : any)
 	{
 		// Gestion des collision mur haut et bas avec la balle 
-		if (this.game.ball.y < 0 || this.game.ball.y > this.game.canvas.height) // omis la taille de la balle
+		if (room.game.ball.y < 0 || room.game.ball.y > room.game.canvas.height) // omis la taille de la balle
 		{
-			this.game.ball.speed.y *= -1;
-			this.gameOpposant.ball.speed.y *= -1;
+			room.game.ball.speed.y *= -1;
+			room.gameOpposant.ball.speed.y *= -1;
 		}
 		// Gestion des collisions avec le Paddle du joueur1
-		if (this.game.ball.x < this.game.player.width)
+		if (room.game.ball.x < room.game.player.width)
 		{
-			if ((this.game.ball.y > this.game.player.y) && (this.game.ball.y < this.game.player.y + this.game.player.height))
+			if ((room.game.ball.y > room.game.player.y) && (room.game.ball.y < room.game.player.y + room.game.player.height))
 			{
-				this.game.ball.speed.x *= -1;
-				this.gameOpposant.ball.speed.x *= -1;
+				room.game.ball.speed.x *= -1;
+				room.gameOpposant.ball.speed.x *= -1;
 			}
 			else
 			{
-				this.initGame();
+				// this.initGame(room.game, room.gameOpposant);
+				room.player1.emit('gameOver', false);
+				room.player2.emit('gameOver', true);
+				// this.initGame(room.game, room.gameOpposant);
+				var index = this.rooms.indexOf(room);
+				if (index !== -1)
+				{
+				    this.rooms.splice(index, 1);
+				}
+
+				clearInterval(fct);
+				console.log(`Il y a mtn ${this.rooms.length} rooms en cours`);
 			}
 		}
 		// Gestion des collisions avec le paddle du joueur 2 
-		if (this.game.ball.x > (this.game.canvas.width - this.game.player.width))
+		if (room.game.ball.x > (room.game.canvas.width - room.game.player.width))
 		{
-			if ((this.game.ball.y > this.game.player2.y) && (this.game.ball.y < this.game.player2.y + this.game.player.height))
+			if ((room.game.ball.y > room.game.player2.y) && (room.game.ball.y < room.game.player2.y + room.game.player.height))
 			{
-				this.game.ball.speed.x *= -1;
-				this.gameOpposant.ball.speed.x *= -1;
+				room.game.ball.speed.x *= -1;
+				room.gameOpposant.ball.speed.x *= -1;
 			}
 			else
 			{
-				this.initGame();
+				// this.initGame(room.game, room.gameOpposant);
+				room.player1.emit('gameOver', true);
+				room.player2.emit('gameOver', false);
+
+				// this.initGame(room.game, room.gameOpposant);
+				var index = this.rooms.indexOf(room);
+				if (index !== -1)
+				{
+				    this.rooms.splice(index, 1);
+				}
+				
+				clearInterval(fct);
+
+				console.log(`Il y a mtn ${this.rooms.length} rooms en cours`);
 			}
 		}
 		// On incremente ball.x et ball.y pour faire avancer la balle dans une direction
-		this.game.ball.x += this.game.ball.speed.x;
-		this.game.ball.y += this.game.ball.speed.y;
-		this.gameOpposant.ball.x -= this.game.ball.speed.x;
-		this.gameOpposant.ball.y -= this.game.ball.speed.y;
+		room.game.ball.x += room.game.ball.speed.x;
+		room.game.ball.y += room.game.ball.speed.y;
+		room.gameOpposant.ball.x -= room.game.ball.speed.x;
+		room.gameOpposant.ball.y -= room.game.ball.speed.y;
 
 		// console.log(`ballX = ${this.game.ball.x}`);
 		// console.log(`ballY = ${this.game.ball.y}`);
-		room[0].emit('ballmove', this.game);
-		room[1].emit('ballmove', this.gameOpposant);
+		room.player1.emit('ballmove', room.game);
+		room.player2.emit('ballmove', room.gameOpposant);
 	}
 
 // /*
 	@SubscribeMessage('playerMove')
 	handlePlayerMove(client : Socket, playerPosY : number)
 	{
-		const stop = 0;
+		// const stop = 0;
 		for(let i = 0; i < this.rooms.length; i++)
 		{
-			for(let j = 0; j < 2; j++)
+			if (client.id == this.rooms[i].player1.id)
 			{
-				if (client.id == (this.rooms[i][j]).id)
-				{
-					if (j == 0)
-					{
-						this.gameOpposant.player2.y = playerPosY;
-					}
-					else
-					{
-						this.game.player2.y = playerPosY;
-					}
-					break;
-				}
+				this.rooms[i].gameOpposant.player2.y = (this.rooms[i].gameOpposant.canvas.height - playerPosY) - this.rooms[i].gameOpposant.player.height;
+				this.rooms[i].game.player.y = playerPosY;
+				break;
 			}
-			if (stop)
+			else if (client.id == this.rooms[i].player2.id)
 			{
+				this.rooms[i].game.player2.y = (this.rooms[i].game.canvas.height - playerPosY) - this.rooms[i].game.player.height;
+				this.rooms[i].gameOpposant.player.y = playerPosY;
 				break;
 			}
 		}

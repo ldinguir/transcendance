@@ -22,4 +22,5 @@ export declare class Game {
             y: number;
         };
     };
+    constructor();
 }

@@ -1,129 +1,196 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import '../styles/Canvas.css';
+import CanvasEnd from "./CanvasEnd";
 
 function Canvas(props)
 {
-	// Ca sert a quoi useRef
 	const ref = useRef(null);
-	const game = props.updatedGame;
+	const [gameIsOver, setGameIsOver] = useState(false);
+	const [isWon, setIsWon] = useState(false);
+	const socket = props.socket;
+	const [game, setGame] = useState(
+		{
+			canvas : 
+			{
+				height : 300,
+				width : 600,
+			},
+			player : 
+			{
+				x : 0,
+				y : 100,
+				height : 100,
+				width :10, 
+			},
+			player2 : 
+			{
+				x : 590,
+				y : 100,
+			},
+			ball : 
+			{
+				x : 300,
+				y : 150,
+				r : 5,
+				speed :
+				{
+					x : 2,
+					y : 2,
+				},
+			}
+		});
 
 	// Pourquoi useEffect
 	useEffect(() => {
-		const socket = props.socket;
-/*
-		socket.on('playermove2', (pos) => {
-			setPlaye2PosY(pos);
+
+		socket.on('ballmove', (updatedGame) => 
+		{
+			setGame(updatedGame);
 		});
-*/
+		socket.on('gameOver', (won) => 
+		{
+			setGameIsOver(true);
+			setIsWon(won);
+		});
+
 		var canvas = ref.current; // pourquoi ref.current au lieu de document.getElementById("canvas")
-		var ctx = canvas.getContext("2d");
-
-		// Taille du canvas
-		canvas.width = 600;
-		canvas.height = 300;
-
-		// Taille des paddle
-		const playerHeight = props.playerHeight;
-		const playerWidth = props.playerWidth;
-		// const speed = props.speed;
-		const reverse = props.reverse;
-
-		function gameZone() 
+		// console.log(canvas)
+		if(canvas)
 		{
-			// fond
-			const gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
-			gradient.addColorStop(0,'rgba(60, 221, 176, 1)');     // Départ
-			gradient.addColorStop(0.4,'rgba(51, 163, 143, 1)'); // Intermédiaire
-			gradient.addColorStop(1,'rgba(203, 99, 215, 1)');    // Arrivée
-			ctx.fillStyle = gradient;            // Affectation au remplissage
-			ctx.fillRect(0, 0, canvas.width, canvas.height);
-		
-			// ligne milieu
-			ctx.beginPath();
-			ctx.moveTo(canvas.width / 2, 0);
-			ctx.lineTo(canvas.width / 2 , canvas.height);
-			ctx.strokeStyle = 'white';
-			ctx.stroke();
-			ctx.closePath();
-		
-			// Les paddles des joueurs 
-			ctx.fillStyle = 'white';
-			ctx.fillRect(game.player.x, game.player.y, playerWidth, playerHeight);
-			ctx.fillRect(game.player2.x, game.player2.y, playerWidth, playerHeight);
-			// ctx.fillRect(game.player2.x, Player2PosY, playerWidth, playerHeight);
 
-			// La balle
-			ctx.beginPath();
-			ctx.fillStyle = 'white';
-			ctx.arc(game.ball.x, game.ball.y, game.ball.r, 0, (2 * Math.PI));
-			ctx.fill();
-			ctx.closePath();
-		}
+			var ctx = canvas.getContext("2d");
 
-		function play() // Fonction qui met a jour la positions des joueurs, la position de la balle
-		{
-			// ballMove();
+			// Taille du canvas
+			canvas.width = 600;
+			canvas.height = 300;
+
+			// Taille des paddle
+			const playerHeight = props.playerHeight;
+			const playerWidth = props.playerWidth;
+			// const speed = props.speed;
+			const reverse = props.reverse;
+
+			function gameZone() 
+			{
+				// fond
+				const gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
+				gradient.addColorStop(0,'rgba(60, 221, 176, 1)');     // Départ
+				gradient.addColorStop(0.4,'rgba(51, 163, 143, 1)'); // Intermédiaire
+				gradient.addColorStop(1,'rgba(203, 99, 215, 1)');    // Arrivée
+				ctx.fillStyle = gradient;            // Affectation au remplissage
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+			
+				// ligne milieu
+				ctx.beginPath();
+				ctx.moveTo(canvas.width / 2, 0);
+				ctx.lineTo(canvas.width / 2 , canvas.height);
+				ctx.strokeStyle = 'white';
+				ctx.stroke();
+				ctx.closePath();
+			
+				// Les paddles des joueurs 
+				ctx.fillStyle = 'white';
+				ctx.strokeStyle = '#900C3F';
+				ctx.fillRect(game.player.x, game.player.y, playerWidth, playerHeight);
+				ctx.strokeRect(game.player.x, game.player.y, playerWidth, playerHeight);
+
+				ctx.fillRect(game.player2.x, game.player2.y, playerWidth, playerHeight);
+				// ctx.strokeStyle = 'red';
+
+				// ctx.fillRect(game.player2.x, Player2PosY, playerWidth, playerHeight);
+
+				// La balle
+				ctx.beginPath();
+				ctx.fillStyle = 'white';
+				ctx.arc(game.ball.x, game.ball.y, game.ball.r, 0, (2 * Math.PI));
+				ctx.fill();
+				ctx.closePath();
+			}
+
+			function play() // Fonction qui met a jour la positions des joueurs, la position de la balle
+			{
+				// ballMove();
+				gameZone();
+				requestAnimationFrame(play);
+			}
+
+			// ---------- DÉPLACEMENTS DES JOUEURS ET GÉSTION DES COLLISIONS ---------- // 
+			function playerMove(event) 
+			{
+				// Recupere la position du canvas par rapport à la page du navigateur 
+				let canvasLocation = canvas.getBoundingClientRect();
+			
+				// Calcul de la position de la souris par rapport a la fenetre et non pas la page du navigateur
+				let mouseLocation = event.clientY - canvasLocation.y;
+			
+				// Recalcul de la position du Paddle --> Le deplacer verticalement de telle sorte que son centre soit à la hauteur de la souris
+				if (mouseLocation < (playerHeight / 2)) // Collision du mur d'en haut
+				{
+					if(reverse)
+					{
+						game.player.y = (canvas.height - playerHeight);
+					}
+					else
+					{
+						game.player.y = 0;
+					}
+				}
+				else if (mouseLocation > (canvas.height - (playerHeight / 2))) // Cas collision mur du bas
+				{
+					if (reverse)
+					{
+						game.player.y = 0;
+					}
+					else
+					{
+						game.player.y = canvas.height - playerHeight;
+					}
+				}
+				else
+				{
+					if (reverse)
+					{
+						game.player.y = canvas.height - mouseLocation - (playerHeight / 2);
+					}
+					else
+					{
+						game.player.y = (mouseLocation - (playerHeight / 2));
+					}
+				}
+				socket.emit('playerMove', game.player.y);
+			}
+
+			// Lorsque la souris passe par le canvas, on récupère l'évènement
+			canvas.addEventListener('mousemove', playerMove);
+			 // /*
 			gameZone();
-			requestAnimationFrame(play);
+			play();
+			// eslint-disable-next-line react-hooks/exhaustive-deps
 		}
+	}, [game, socket, ref]);
 
-		// ---------- DÉPLACEMENTS DES JOUEURS ET GÉSTION DES COLLISIONS ---------- // 
-		function playerMove(event) 
+	function chooseCanvas(gameIsOver)
+	{
+		if (!gameIsOver)
 		{
-			// Recupere la position du canvas par rapport à la page du navigateur 
-			let canvasLocation = canvas.getBoundingClientRect();
-		
-			// Calcul de la position de la souris par rapport a la fenetre et non pas la page du navigateur
-			let mouseLocation = event.clientY - canvasLocation.y;
-		
-			// Recalcul de la position du Paddle --> Le deplacer verticalement de telle sorte que son centre soit à la hauteur de la souris
-			if (mouseLocation < (playerHeight / 2)) // Collision du mur d'en haut
-			{
-				if(reverse)
-				{
-					game.player.y = (canvas.height - playerHeight);
-				}
-				else
-				{
-					game.player.y = 0;
-				}
-			}
-			else if (mouseLocation > (canvas.height - (playerHeight / 2))) // Cas collision mur du bas
-			{
-				if (reverse)
-				{
-					game.player.y = 0;
-				}
-				else
-				{
-					game.player.y = canvas.height - playerHeight;
-				}
-			}
-			else
-			{
-				if (reverse)
-				{
-					game.player.y = canvas.height - mouseLocation - (playerHeight / 2);
-				}
-				else
-				{
-					game.player.y = (mouseLocation - (playerHeight / 2));
-				}
-			}
-			socket.emit('playerMove', game.player.y);
+			return(<canvas className='canvas' ref={ref} />)
 		}
-		
-		// Lorsque la souris passe par le canvas, on récupère l'évènement
-		canvas.addEventListener('mousemove', playerMove);
-		 // /*
-		gameZone();
-		play();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [game]);
-	
+		else
+		{
+			return(<CanvasEnd isWon={isWon}/>)
+		}
+	}
 	return(
-	<canvas className='canvas' ref={ref}/>
-	)
+		<div>
+			{
+				chooseCanvas(gameIsOver)
+			}
+		</div>
+
+	);
+	// return(
+	// <canvas className='canvas' ref={ref}/>
+	// )
 }
 export default Canvas;
 

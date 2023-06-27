@@ -3,8 +3,3 @@
 	top: 20%;
 	left: 35%;
 }
-
-/* ((mode === -1) ?  */
-/* (<Canvas playerWidth={10} playerHeight={100} speed={4} reverse={-1}/>) :  */
-/* (<Canvas playerWidth={10} playerHeight={100} speed={mode} reverse={0}/>) */
-/* ) */

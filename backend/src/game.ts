@@ -30,6 +30,13 @@ export class Game
 			y	: number
 		}
 	}
+	constructor()
+	{
+	  this.canvas = { height: 300, width: 600 };
+	  this.player = { x: 0, y: 100, height: 100, width: 10 };
+	  this.player2 = { x: 590, y: 100};
+	  this.ball = { x: 300, y: 150, r: 5, speed : { x: 2, y: 2} }; // a modifier en fonction du lvl 
+	}
 }
 
 /*
