@@ -24,7 +24,7 @@ export class GameSockets
 
 	// les gens qui cliquent sur play et veulent lancer une partie 
 	@SubscribeMessage('joinGame')
-	handleJoinGame(client : Socket, mode: string)
+	async handleJoinGame(client : Socket, mode: string)
 	{
 		console.log(`play request from : ${client.id}`);
 		console.log(`Le mode est : ${mode}`);
@@ -46,7 +46,7 @@ export class GameSockets
 				console.log(`Room = ${room}`);
 
 				this.rooms.push(room);
-				this.startGame(room);
+				this.startGame(room, 2);
 			}
 		}
 		else if (mode == ',med')
@@ -64,7 +64,7 @@ export class GameSockets
 				this.queueMed.splice(0,2);
 
 				this.rooms.push(room);
-				this.startGame(room);
+				this.startGame(room, 4);
 			}
 		}
 		else if (mode == ',hard')
@@ -82,7 +82,7 @@ export class GameSockets
 				this.queueHard.splice(0,2);
 
 				this.rooms.push(room);
-				this.startGame(room);
+				this.startGame(room, 6);
 			}
 		}
 		else if (mode == ',rev')
@@ -100,12 +100,12 @@ export class GameSockets
 				this.queueRev.splice(0,2);
 
 				this.rooms.push(room);
-				this.startGame(room);
+				this.startGame(room, 4);
 			}
 		}
 	}
 
-	startGame(room : Room)
+	startGame(room : Room, mode : number)
 	{
 		room.game = new Game();
 		room.gameOpposant = new Game();
@@ -114,9 +114,14 @@ export class GameSockets
 
 		room.player1.emit('startGame');
 		room.player2.emit('startGame');
-		this.initGame(room.game, room.gameOpposant);
 
-		const fct = setInterval(()=>
+		this.initGame(room.game, room.gameOpposant);
+		room.game.ball.speed.x = mode;
+		room.game.ball.speed.y = mode;
+		room.gameOpposant.ball.speed.x = mode;
+		room.gameOpposant.ball.speed.y = mode;
+
+		const fct = setInterval(async ()=>
 		{
 			this.ballMove(room, fct);
 		}, 50);
@@ -151,8 +156,8 @@ export class GameSockets
 			r : 5,
 			speed :
 			{
-				x : 2,
-				y : 2,
+				x : 0,
+				y : 0,
 			}
 		}
 // Initialisation du joueur 2
@@ -240,7 +245,7 @@ export class GameSockets
 				{
 				    this.rooms.splice(index, 1);
 				}
-				
+
 				clearInterval(fct);
 
 				console.log(`Il y a mtn ${this.rooms.length} rooms en cours`);
@@ -260,7 +265,7 @@ export class GameSockets
 
 // /*
 	@SubscribeMessage('playerMove')
-	handlePlayerMove(client : Socket, playerPosY : number)
+	async handlePlayerMove(client : Socket, playerPosY : number)
 	{
 		// const stop = 0;
 		for(let i = 0; i < this.rooms.length; i++)

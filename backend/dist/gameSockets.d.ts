@@ -8,9 +8,9 @@ export declare class GameSockets {
     queueHard: Socket[];
     queueRev: Socket[];
     rooms: Room[];
-    handleJoinGame(client: Socket, mode: string): void;
-    startGame(room: Room): void;
+    handleJoinGame(client: Socket, mode: string): Promise<void>;
+    startGame(room: Room, mode: number): void;
     initGame(game: Game, gameOpposant: Game): void;
     ballMove(room: Room, fct: any): void;
-    handlePlayerMove(client: Socket, playerPosY: number): void;
+    handlePlayerMove(client: Socket, playerPosY: number): Promise<void>;
 }

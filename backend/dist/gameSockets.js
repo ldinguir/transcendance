@@ -22,7 +22,7 @@ let GameSockets = class GameSockets {
         this.queueRev = [];
         this.rooms = [];
     }
-    handleJoinGame(client, mode) {
+    async handleJoinGame(client, mode) {
         console.log(`play request from : ${client.id}`);
         console.log(`Le mode est : ${mode}`);
         if (mode == ',easy') {
@@ -37,7 +37,7 @@ let GameSockets = class GameSockets {
                 this.queueEasy.splice(0, 2);
                 console.log(`Room = ${room}`);
                 this.rooms.push(room);
-                this.startGame(room);
+                this.startGame(room, 2);
             }
         }
         else if (mode == ',med') {
@@ -50,7 +50,7 @@ let GameSockets = class GameSockets {
                 room.player2 = this.queueMed[1];
                 this.queueMed.splice(0, 2);
                 this.rooms.push(room);
-                this.startGame(room);
+                this.startGame(room, 4);
             }
         }
         else if (mode == ',hard') {
@@ -63,7 +63,7 @@ let GameSockets = class GameSockets {
                 room.player2 = this.queueHard[1];
                 this.queueHard.splice(0, 2);
                 this.rooms.push(room);
-                this.startGame(room);
+                this.startGame(room, 6);
             }
         }
         else if (mode == ',rev') {
@@ -76,18 +76,22 @@ let GameSockets = class GameSockets {
                 room.player2 = this.queueRev[1];
                 this.queueRev.splice(0, 2);
                 this.rooms.push(room);
-                this.startGame(room);
+                this.startGame(room, 4);
             }
         }
     }
-    startGame(room) {
+    startGame(room, mode) {
         room.game = new game_1.Game();
         room.gameOpposant = new game_1.Game();
         console.log(`Le jeu va commencer entre ${room.player1.id} et ${room.player2.id}`);
         room.player1.emit('startGame');
         room.player2.emit('startGame');
         this.initGame(room.game, room.gameOpposant);
-        const fct = setInterval(() => {
+        room.game.ball.speed.x = mode;
+        room.game.ball.speed.y = mode;
+        room.gameOpposant.ball.speed.x = mode;
+        room.gameOpposant.ball.speed.y = mode;
+        const fct = setInterval(async () => {
             this.ballMove(room, fct);
         }, 50);
     }
@@ -114,8 +118,8 @@ let GameSockets = class GameSockets {
                 y: 150,
                 r: 5,
                 speed: {
-                    x: 2,
-                    y: 2,
+                    x: 0,
+                    y: 0,
                 }
             };
         gameOpposant.canvas = {
@@ -189,7 +193,7 @@ let GameSockets = class GameSockets {
         room.player1.emit('ballmove', room.game);
         room.player2.emit('ballmove', room.gameOpposant);
     }
-    handlePlayerMove(client, playerPosY) {
+    async handlePlayerMove(client, playerPosY) {
         for (let i = 0; i < this.rooms.length; i++) {
             if (client.id == this.rooms[i].player1.id) {
                 this.rooms[i].gameOpposant.player2.y = (this.rooms[i].gameOpposant.canvas.height - playerPosY) - this.rooms[i].gameOpposant.player.height;
@@ -212,13 +216,13 @@ __decorate([
     (0, websockets_1.SubscribeMessage)('joinGame'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], GameSockets.prototype, "handleJoinGame", null);
 __decorate([
     (0, websockets_1.SubscribeMessage)('playerMove'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [socket_io_1.Socket, Number]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], GameSockets.prototype, "handlePlayerMove", null);
 GameSockets = __decorate([
     (0, websockets_1.WebSocketGateway)({
