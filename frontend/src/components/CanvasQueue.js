@@ -16,6 +16,7 @@ function CanvasQueue(props)
 	  	  
 		return () => {
 		  socketinstance.disconnect();
+		  setSocket(null);
 		};
 	  }, []);
 
@@ -135,19 +136,19 @@ function chooseCanvas(GameStarted)
 	{
 		if (props.mode === 'easy')
 		{
-			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={2} reverse={0}/>)
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={1} reverse={0}/>)
 		}
 		else if (props.mode === 'med')
 		{
-			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={0}/>)
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={2} reverse={0}/>)
 		}
 		else if (props.mode === 'hard')
 		{
-			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={6} reverse={0}/>)
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={0}/>)
 		}
 		else if (props.mode === 'rev')
 		{
-			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={4} reverse={-1}/>)
+			return(<Canvas socket={socket} playerWidth={10} playerHeight={100} speed={2} reverse={-1}/>)
 		}
 	}
 }

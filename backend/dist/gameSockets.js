@@ -93,7 +93,7 @@ let GameSockets = class GameSockets {
         room.gameOpposant.ball.speed.y = mode;
         const fct = setInterval(async () => {
             this.ballMove(room, fct);
-        }, 50);
+        }, 20);
     }
     initGame(game, gameOpposant) {
         game.canvas = {
@@ -194,6 +194,7 @@ let GameSockets = class GameSockets {
         room.player2.emit('ballmove', room.gameOpposant);
     }
     async handlePlayerMove(client, playerPosY) {
+        console.log("________________________", playerPosY);
         for (let i = 0; i < this.rooms.length; i++) {
             if (client.id == this.rooms[i].player1.id) {
                 this.rooms[i].gameOpposant.player2.y = (this.rooms[i].gameOpposant.canvas.height - playerPosY) - this.rooms[i].gameOpposant.player.height;

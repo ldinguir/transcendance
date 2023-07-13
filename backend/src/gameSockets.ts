@@ -124,7 +124,7 @@ export class GameSockets
 		const fct = setInterval(async ()=>
 		{
 			this.ballMove(room, fct);
-		}, 50);
+		}, 20);
 	}
 
 	initGame(game : Game, gameOpposant : Game)
@@ -259,14 +259,17 @@ export class GameSockets
 
 		// console.log(`ballX = ${this.game.ball.x}`);
 		// console.log(`ballY = ${this.game.ball.y}`);
-		room.player1.emit('ballmove', room.game);
-		room.player2.emit('ballmove', room.gameOpposant);
+		room.player1.volatile.emit('ballmove', room.game);
+		room.player2.volatile.emit('ballmove', room.gameOpposant);
+		// room.player1.emit('ballmove', room.game);
+		// room.player2.emit('ballmove', room.gameOpposant);
 	}
 
 // /*
 	@SubscribeMessage('playerMove')
 	async handlePlayerMove(client : Socket, playerPosY : number)
 	{
+		console.log("________________________", playerPosY);
 		// const stop = 0;
 		for(let i = 0; i < this.rooms.length; i++)
 		{
